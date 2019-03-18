@@ -12,15 +12,45 @@ app.use(function(req, res, next) {
 });
 
 app.get('/:city', function(req, res) {
-  const url = `http://api.openweathermap.org/data/2.5/weather?q=${req.params.city}&appid=${apiKey}`
+  const weatherURL = `http://api.openweathermap.org/data/2.5/weather?q=${req.params.city}&appid=${apiKey}`
 
-  request(url, function(err, response, body) {
+  request(weatherURL, function(err, response, body) {
     if (err) {
       console.log('error: ', err);
+      throw new Error(err);
+    } 
+    
+    const weather = JSON.parse(body);
+      
+    if (weather.cod !== '404') {
+      const uvOptions = { 
+        method: 'GET',
+        url: 'https://api.openuv.io/api/v1/uv',
+        qs: { 
+          lat: weather.coord.lat, 
+          lng: weather.coord.lon
+        },
+        headers: { 
+          'content-type': 'application/json',
+          'x-access-token': '6777d021fc69af21831b0374f689d540' 
+        }
+      };
+    
+      request(uvOptions, function (error, response, body) {
+        if (error) {
+          console.log(error);
+          throw new Error(error);
+        }
+
+        const message = {
+          weather,
+          uv: body
+        };
+
+        res.send(message);
+      });
     } else {
-      const weather = JSON.parse(body);
-      const message = `It's ${weather.main.temp - 273.15} degrees in ${weather.name}!`;
-      res.send(message);
+      res.send(weather);
     }
   });
 });
