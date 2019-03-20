@@ -1,15 +1,22 @@
 const express = require('express');
 const request = require('request');
+const webPush = require('web-push');
+const bodyParser = require('body-parser');
 
+const publicVapidKey = 'BMqT0H3AHi6U8bXkMsthL0_gUfUI146wrBiTSxyXmN-9sNUlBcYC79aHvpU8lBrlrLeRK0LBIw3Gu2NOb8-2IA8';
+const privateVapidKey = 'ohjtc9smmEvkuvMkK0QaAaWiI2kkOdSW0wx2QU0t0R4';
 const apiKey = '02586c0ff71bf561560254084254f57f';
 
 var app = express();
+
+webPush.setVapidDetails('mailto:test@test.com', publicVapidKey, privateVapidKey);
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+app.use(bodyParser.json());
 
 app.get('/:city', function(req, res) {
   const weatherURL = `http://api.openweathermap.org/data/2.5/weather?q=${req.params.city}&appid=${apiKey}`
@@ -55,6 +62,15 @@ app.get('/:city', function(req, res) {
   });
 });
 
-app.listen(3000);
+app.post('/subscribe', (req, res) => {
+  const subscription = req.body;
+  const payload = JSON.stringify({
+    title: 'Push Test'
+  });
 
+  res.status(201).json({});
+  webPush.sendNotification(subscription, payload).catch(err => console.error(err));
+});
+
+app.listen(3000);
 console.log('You are listening to port 3000');
