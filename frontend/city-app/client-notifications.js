@@ -14,6 +14,8 @@ async function send() {
     applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
   });
 
+  window.subscription = subscription;
+
   await fetch('http://localhost:3000/subscribe', {
     method: 'POST',
     body: JSON.stringify(subscription),
