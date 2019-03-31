@@ -38,7 +38,8 @@ app.post('/:city', function(req, res) {
         uv: 0,
         uvMax: 0,
         aqi: 0,
-        list: []
+        todayList: [],
+        nextList: []
       };
 
       const airURL = `http://api.airvisual.com/v2/nearest_city?lat=${weather.lat}&lon=${weather.lon}&key=2rn8uBbGCowXGyWPw`;
@@ -57,9 +58,10 @@ app.post('/:city', function(req, res) {
           const uvResult = JSON.parse(result);
           weather.uv = uvResult.result.uv;
           weather.uvMax = uvResult.result.uv_max;
-        
-          for (var element in receivedWeather.list) {
-            const listElement = receivedWeather.list[element];
+
+          for (var i = 0; i < 8; i++) {
+            const listElement = receivedWeather.list[i];
+
             const weatherElement = {
               date: listElement.dt,
               minTemp: Math.round(listElement.main.temp_min - 273.15),
@@ -70,7 +72,20 @@ app.post('/:city', function(req, res) {
               description: listElement.weather[0].description.charAt(0).toUpperCase() + listElement.weather[0].description.slice(1),
             };
 
-            weather.list.push(weatherElement);
+            weather.todayList.push(weatherElement);
+          }
+
+          for (var i = 8; i < receivedWeather.list.length; i += 8) {
+            const listElement = receivedWeather.list[i];
+            const weatherElement = {
+              date: listElement.dt,
+              minTemp: Math.round(listElement.main.temp_min - 273.15),
+              maxTemp: Math.round(listElement.main.temp_max - 273.15),
+              weather: listElement.weather[0].main,
+              description: listElement.weather[0].description,
+            };
+
+            weather.nextList.push(weatherElement);
           }
 
           sendNotifications(req, weather);
